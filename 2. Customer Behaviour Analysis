@@ -1,0 +1,84 @@
+/*  Engagement Metrics Impact on Conversion */
+SELECT 
+    CASE 
+        WHEN WebsiteVisits >= 50 THEN 'High (50+)'
+        WHEN WebsiteVisits >= 20 THEN 'Medium (20-49)'
+        ELSE 'Low (<20)'
+    END as visit_frequency,
+    COUNT(*) as total_customers,
+    SUM(CONVERT(INT, Conversion)) as total_conversions,
+    ROUND(AVG(CONVERT(INT, Conversion)) * 100, 2) as conversion_rate,
+    ROUND(AVG(TimeOnSite), 2) as avg_time_on_site,
+    ROUND(AVG(PagesPerVisit), 2) as avg_pages_per_visit
+FROM digital_marketing_campaign_dataset
+GROUP BY WebsiteVisits
+ORDER BY conversion_rate DESC;
+
+/*  Previous Purchase Impact Analysis */ 
+SELECT 
+    CASE 
+        WHEN PreviousPurchases > 5 THEN '5+ purchases'
+        WHEN PreviousPurchases > 2 THEN '3-5 purchases'
+        WHEN PreviousPurchases > 0 THEN '1-2 purchases'
+        ELSE 'No purchases'
+    END as purchase_history,
+    COUNT(*) as customer_count,
+    SUM(CONVERT(INT, Conversion)) as conversions,
+    ROUND(AVG(CONVERT(INT, Conversion)) * 100, 2) as conversion_rate,
+    ROUND(AVG(LoyaltyPoints), 0) as avg_loyalty_points
+FROM digital_marketing_campaign_dataset
+GROUP BY PreviousPurchases
+ORDER BY conversion_rate DESC;
+
+/* Email Engagement Analysis */
+SELECT 
+    CASE 
+        WHEN EmailOpens > 10 THEN 'High Opens (>10)'
+        WHEN EmailOpens > 5 THEN 'Medium Opens (6-10)'
+        WHEN EmailOpens > 0 THEN 'Low Opens (1-5)'
+        ELSE 'No Opens'
+    END as email_engagement,
+    COUNT(*) as total_customers,
+    ROUND(AVG(EmailClicks), 2) as avg_email_clicks,
+    ROUND(AVG(CONVERT(INT, Conversion)) * 100, 2) as conversion_rate,
+    ROUND(AVG(CONVERT(INT, EmailClicks) / NULLIF(CONVERT(INT, EmailOpens), 0) * 100), 2) as click_through_rate
+FROM digital_marketing_campaign_dataset
+GROUP BY EmailOpens
+ORDER BY conversion_rate DESC;
+
+/* Engagement Score Analysis */
+WITH engagement_scores AS (
+    SELECT *,
+        (WebsiteVisits * 0.3 + 
+         PagesPerVisit * 0.2 + 
+         TimeOnSite * 0.2 + 
+         EmailOpens * 0.15 + 
+         SocialShares * 0.15) as engagement_score
+    FROM digital_marketing_campaign_dataset
+)
+SELECT 
+    CASE 
+        WHEN engagement_score >= 75 THEN 'Very High'
+        WHEN engagement_score >= 50 THEN 'High'
+        WHEN engagement_score >= 25 THEN 'Medium'
+        ELSE 'Low'
+    END as engagement_level,
+    COUNT(*) as customer_count,
+    ROUND(AVG(CONVERT(INT, Conversion)) * 100, 2) as conversion_rate,
+    ROUND(AVG(engagement_score), 2) as avg_engagement_score
+FROM engagement_scores
+GROUP BY engagement_score 
+ORDER BY avg_engagement_score DESC;
+
+/* Cross-Channel Engagement Analysis */
+SELECT 
+    CampaignChannel,
+    ROUND(AVG(WebsiteVisits), 2) as avg_visits,
+    ROUND(AVG(TimeOnSite), 2) as avg_time_on_site,
+    ROUND(AVG(PagesPerVisit), 2) as avg_pages_per_visit,
+    ROUND(AVG(EmailOpens), 2) as avg_email_opens,
+    ROUND(AVG(SocialShares), 2) as avg_social_shares,
+    ROUND(AVG(CONVERT(INT, Conversion)) * 100, 2) as conversion_rate
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignChannel
+ORDER BY conversion_rate DESC;
