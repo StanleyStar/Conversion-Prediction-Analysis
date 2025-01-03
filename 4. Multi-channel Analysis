@@ -1,0 +1,73 @@
+/* Channel Performance Comparison */
+SELECT 
+    CampaignChannel,
+    COUNT(*) as total_campaigns,
+    SUM(CONVERT(INT, Conversion)) as total_conversions,
+    ROUND(AVG(CONVERT(INT, Conversion)) * 100, 2) as conversion_rate,
+    ROUND(SUM(AdSpend), 2) as total_spend,
+    ROUND(AVG(EmailOpens), 2) as avg_email_opens,
+    ROUND(AVG(SocialShares), 2) as avg_social_shares,
+    ROUND(AVG(WebsiteVisits), 2) as avg_website_visits
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignChannel
+ORDER BY conversion_rate DESC;
+
+/* Campaign Type Performance by Channel */
+SELECT 
+    CampaignChannel,
+    CampaignType,
+    COUNT(*) as campaign_count,
+    ROUND(AVG(CONVERT(INT, Conversion)) * 100, 2) as conversion_rate,
+    ROUND(AVG(AdSpend), 2) as avg_spend,
+    ROUND(AVG(ClickThroughRate) * 100, 2) as avg_ctr,
+    ROUND(AVG(ConversionRate) * 100, 2) as avg_conversion_rate
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignChannel, CampaignType
+ORDER BY CampaignChannel, conversion_rate DESC;
+
+/* Social Media Engagement Analysis */
+SELECT 
+    CampaignChannel,
+    ROUND(AVG(SocialShares), 2) as avg_social_shares,
+    ROUND(AVG(CASE WHEN SocialShares > 0 THEN Conversion ELSE 0 END) * 100, 2) as conversion_rate_with_shares,
+    ROUND(AVG(CASE WHEN SocialShares = 0 THEN Conversion ELSE 0 END) * 100, 2) as conversion_rate_without_shares,
+    COUNT(*) as total_campaigns,
+    SUM(CASE WHEN SocialShares > 0 THEN 1 ELSE 0 END) as campaigns_with_shares
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignChannel
+ORDER BY avg_social_shares DESC;
+
+/* Email Marketing Performance Analysis */
+SELECT 
+    CampaignChannel,
+    ROUND(AVG(EmailOpens), 2) as avg_email_opens,
+    ROUND(AVG(EmailClicks), 2) as avg_email_clicks,
+    ROUND(AVG(EmailClicks / NULLIF(EmailOpens, 0) * 100), 2) as email_ctr,
+    ROUND(AVG(CASE WHEN EmailClicks > 0 THEN Conversion ELSE 0 END) * 100, 2) as conversion_rate_with_clicks,
+    COUNT(*) as total_campaigns
+FROM digital_marketing_campaign_dataset
+WHERE CampaignChannel = 'Email'
+GROUP BY CampaignChannel;
+
+/* Channel ROI Analysis */
+WITH channel_metrics AS (
+    SELECT 
+        CampaignChannel,
+        COUNT(*) as total_campaigns,
+        SUM(CONVERT(INT, Conversion)) as total_conversions,
+        SUM(AdSpend) as total_spend,
+        AVG(WebsiteVisits) as avg_visits,
+        AVG(TimeOnSite) as avg_time_on_site
+    FROM digital_marketing_campaign_dataset
+    GROUP BY CampaignChannel
+)
+SELECT 
+    CampaignChannel,
+    total_campaigns,
+    total_conversions,
+    ROUND(total_spend, 2) as total_spend,
+    ROUND(total_spend/NULLIF(total_conversions, 0), 2) as cost_per_conversion,
+    ROUND(avg_visits, 2) as avg_visits,
+    ROUND(avg_time_on_site, 2) as avg_time_on_site
+FROM channel_metrics
+ORDER BY cost_per_conversion ASC;
