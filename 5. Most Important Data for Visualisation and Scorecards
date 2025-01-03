@@ -1,0 +1,104 @@
+/* Most Important Data for Visualisation */
+
+/* Campaign Channel Performance (from Multi-channel Analysis, Step 1) */
+SELECT 
+    CampaignChannel,
+    COUNT(*) as total_campaigns,
+    SUM(CONVERT(INT, Conversion)) as total_conversions,
+    ROUND(AVG(ConversionRate) * 100, 2) as avg_conversion_rate,
+    ROUND(SUM(AdSpend), 2) as total_spend
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignChannel
+ORDER BY  avg_conversion_rate DESC;
+
+/* Customer Value Segments (from Demographic Analysis, Step 5) */
+WITH customer_value AS (
+    SELECT *,
+        CASE 
+            WHEN Income >= 75000 AND PreviousPurchases >= 3 THEN 'High Value'
+            WHEN Income >= 50000 OR PreviousPurchases >= 2 THEN 'Medium Value'
+            ELSE 'Standard Value'
+        END as customer_segment
+    FROM digital_marketing_campaign_dataset
+)
+SELECT 
+    customer_segment,
+    COUNT(*) as segment_size,
+    ROUND(AVG(ConversionRate) * 100, 2) as avg_conversion_rate,
+    ROUND(AVG(AdSpend), 2) as avg_ad_spend
+FROM customer_value
+GROUP BY customer_segment
+ORDER BY avg_conversion_rate DESC;
+
+/* Engagement Impact (from Customer Behaviour Analysis, Step 1) */
+SELECT 
+    CASE 
+        WHEN WebsiteVisits >= 45 THEN 'High (45+)'
+        WHEN WebsiteVisits >= 20 THEN 'Medium (20-44)'
+        ELSE 'Low (<20)'
+    END as visit_frequency,
+    COUNT(*) as total_customers,
+    ROUND(AVG(ConversionRate) * 100, 2) as avg_conversion_rate,
+    ROUND(AVG(TimeOnSite), 2) as avg_time_on_site,
+    ROUND(AVG(PagesPerVisit), 2) as avg_pages_per_visit
+FROM digital_marketing_campaign_dataset
+GROUP BY WebsiteVisits
+ORDER BY avg_conversion_rate DESC;
+
+/* Age and Campaign Performance (from Demographic Analysis, Step 4 - simplified) */
+SELECT 
+    CASE 
+        WHEN Age < 35 THEN 'Young Adult'
+        WHEN Age BETWEEN 35 AND 54 THEN 'Middle Age'
+        ELSE 'Senior'
+    END as age_category,
+    CampaignChannel,
+    COUNT(*) as total_campaigns,
+    ROUND(AVG(ConversionRate) * 100, 2) as avg_conversion_rate
+FROM digital_marketing_campaign_dataset
+GROUP BY Age, CampaignChannel
+ORDER BY avg_conversion_rate DESC;
+
+/* Campaign Type Success (from Campaign Performance Analysis, Step 3) */
+SELECT 
+    CampaignType,
+    COUNT(*) as campaign_count,
+    ROUND(AVG(ConversionRate) * 100, 2) as avg_conversion_rate,
+    ROUND(AVG(AdSpend), 2) as avg_spend
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignType
+ORDER BY avg_conversion_rate DESC;
+
+/* Scorecards Visualisation
+Overall Conversion Rate */
+SELECT ROUND(AVG(ConversionRate) * 100, 2) as overall_conversion_rate
+FROM digital_marketing_campaign_dataset;
+
+/* Total Ad Spend and Cost Per Conversion*/
+SELECT 
+    ROUND(SUM(AdSpend), 2) as total_ad_spend,
+    ROUND(SUM(AdSpend)/NULLIF(SUM(CONVERT(INT, Conversion)), 0), 2) as cost_per_conversion
+FROM digital_marketing_campaign_dataset;
+
+/* Best Performing Channel */
+SELECT TOP 1 
+    CampaignChannel,
+    ROUND(AVG(ConversionRate) * 100, 2) as avg_conversion_rate
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignChannel
+ORDER BY avg_conversion_rate DESC
+
+/* Average Customer Engagement Metrics */
+SELECT 
+    ROUND(AVG(WebsiteVisits), 1) as avg_visits,
+    ROUND(AVG(TimeOnSite), 1) as avg_time_on_site,
+    ROUND(AVG(PagesPerVisit), 1) as avg_pages_per_visit
+FROM digital_marketing_campaign_dataset;
+
+/* Most Effective Campaign Type */
+SELECT TOP 1
+    CampaignType,
+    ROUND(AVG(ConversionRate) * 100, 2) as avg_conversion_rate
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignType
+ORDER BY avg_conversion_rate DESC
