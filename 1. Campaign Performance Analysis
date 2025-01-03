@@ -1,0 +1,60 @@
+/* Compare Conversion Rates Across Different Campaign Channels */
+SELECT 
+    CampaignChannel,
+    COUNT(*) as total_campaigns,
+    SUM(CONVERT(INT, Conversion)) as total_conversions,
+    ROUND(AVG(CONVERT(INT, Conversion)) * 100, 2) as conversion_rate,
+    ROUND(AVG(ClickThroughRate) * 100, 2) as avg_ctr,
+    ROUND(SUM(AdSpend), 2) as total_ad_spend
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignChannel
+ORDER BY conversion_rate DESC;
+
+/* Analyse ROI by Campaign Channel */
+SELECT 
+    CampaignChannel,
+    ROUND(SUM(AdSpend), 2) as total_spend,
+    SUM(CONVERT(INT, Conversion)) as total_conversions,
+    ROUND(SUM(AdSpend)/NULLIF(SUM(CONVERT(INT, Conversion)), 0), 2) as cost_per_conversion,
+    ROUND((SUM(CONVERT(INT, Conversion)) / NULLIF(SUM(AdSpend), 0)) * 100, 2) as conversions_per_dollar
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignChannel
+ORDER BY cost_per_conversion ASC;
+
+/* Campaign Type Performance Analysis */
+SELECT 
+    CampaignType,
+    CampaignChannel,
+    COUNT(*) as campaign_count,
+    ROUND(AVG(CONVERT(INT, Conversion)) * 100, 2) as conversion_rate,
+    ROUND(AVG(AdSpend), 2) as avg_spend,
+    ROUND(SUM(AdSpend), 2) as total_spend
+FROM digital_marketing_campaign_dataset
+GROUP BY CampaignType, CampaignChannel
+ORDER BY CampaignType, conversion_rate DESC;
+
+/* High-Performing Campaign Analysis */
+SELECT 
+    CampaignChannel,
+    CampaignType,
+    ROUND(AVG(TimeOnSite), 2) as avg_time_on_site,
+    ROUND(AVG(PagesPerVisit), 2) as avg_pages_per_visit,
+    ROUND(AVG(ConversionRate) * 100, 2) as avg_conversion_rate
+FROM digital_marketing_campaign_dataset
+WHERE Conversion = 1
+GROUP BY CampaignChannel, CampaignType
+HAVING COUNT(*) > 10
+ORDER BY avg_conversion_rate DESC;
+
+/* Campaign Efficiency Metrics */
+SELECT 
+    CampaignChannel,
+    ROUND(AVG(AdSpend), 2) as avg_spend,
+    ROUND(AVG(CASE WHEN Conversion = 1 THEN AdSpend ELSE NULL END), 2) as avg_spend_for_conversions,
+    ROUND(AVG(ClickThroughRate) * 100, 2) as avg_ctr,
+    ROUND(AVG(ConversionRate) * 100, 2) as avg_conversion_rate,
+    ROUND(AVG(WebsiteVisits), 2) as avg_website_visits
+FROM digital_marketing_campaign_dataset 
+GROUP BY CampaignChannel
+ORDER BY avg_conversion_rate DESC;
+
